@@ -1,0 +1,62 @@
+.home {
+    text-align:start;
+
+  }
+  
+  .imgsection{
+    display: flex;
+    justify-content: center;
+  }
+  .imghome{
+        width: 80%;
+  }
+  .hero-section {
+    /* background-image: url('../images/homecar.png'); */
+    padding: 40px 40px 0;
+    /* background-size: cover; */
+  }
+  
+  .hero-title {
+    font-size: 3.5em;
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.5em;
+    margin: 10px 0;
+  }
+  
+  .hero-button {
+    padding: 10px 20px;
+    font-size: 2.5em;
+    background-color: black;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .hero-button:hover {
+    background-color: gray; /* Couleur au survol */
+  }
+  
+  .vehicle-section {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Espace entre les images de voiture */
+    margin: 20px 0;
+  }
+  
+  .vehicle-image {
+    width: 300px; /* Largeur des images */
+    height: auto; /* Hauteur automatique pour maintenir le ratio */
+  }
+  
+  
+.weather{
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
