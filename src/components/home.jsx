@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useGeolocated } from "react-geolocated";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import '../assets/css/home.css'; // Ton fichier de style
-
+import { Audio, Circles } from 'react-loader-spinner'
+;
 const API_KEY = "f829cab68807f74cd6f30ecf447646e0";
 
 const Home = () => {
@@ -46,7 +47,17 @@ const Home = () => {
   }
 
   if (!coords) {
-    return <div>Obtention de votre position...</div>;
+    return         <div className="loader">
+    <Circles
+ height="80"
+  width="80"
+  color="#4fa94d"
+  ariaLabel="circles-loading"
+  wrapperStyle={{}}
+  wrapperClass=""
+  visible={true}
+    />  
+    </div>  
   }
 
   return (
@@ -76,8 +87,18 @@ const Home = () => {
           </Swiper>
         </div>
       ) : (
-        <p>Chargement des prévisions météo...</p>
-      )}
+        <div className="loader">
+<Circles
+ height="80"
+  width="80"
+  color="#4fa94d"
+  ariaLabel="circles-loading"
+  wrapperStyle={{}}
+  wrapperClass=""
+  visible={true}
+/>  
+</div>  
+  )}
     </div>
   );
 };

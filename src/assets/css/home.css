@@ -86,3 +86,9 @@ img {
 .swiper-wrapper{
   display: flex;
 }
+
+.loader{
+  display: flex;
+  margin-top: 20%;
+  justify-content: center;
+}
