@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useGeolocated } from "react-geolocated";
-import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/swiper-bundle.css';
+import 'bootstrap/dist/css/bootstrap.min.css'; 
 import '../assets/css/home.css'; // Ton fichier de style
-import { Audio, Circles } from 'react-loader-spinner'
-;
+import WeatherTabs from './weatherTabs'; // Le composant qui gère les onglets
+import Loader from './loader'; // Le loader pour l'attente
+import '../assets/css/home.css'; 
+
 const API_KEY = "f829cab68807f74cd6f30ecf447646e0";
 
 const Home = () => {
-  const [weatherData, setWeatherData] = useState(null);
+  const [weatherDataList, setWeatherDataList] = useState([]); // Liste des prévisions météo pour plusieurs villes
+  const [currentWeatherData, setCurrentWeatherData] = useState(null); // Météo actuelle pour une ville
+  const [city, setCity] = useState(''); // Ville saisie par l'utilisateur
+  const [citiesWeatherData, setCitiesWeatherData] = useState([]); // Tableau pour stocker les données de plusieurs villes
+  const [userLocationData, setUserLocationData] = useState(null); // Données des prévisions pour la localisation de l'utilisateur
+
+  const addCityWeatherData = (cityWeatherData) => {
+    setCitiesWeatherData((prevCities) => [...prevCities, cityWeatherData]); // Ajouter une nouvelle ville sans écraser les précédentes
+  };
 
   // Utilisation de useGeolocated pour obtenir la géolocalisation de l'utilisateur
   const { coords, isGeolocationAvailable, isGeolocationEnabled } = useGeolocated({
@@ -17,24 +28,82 @@ const Home = () => {
     userDecisionTimeout: 5000,
   });
 
-  // Fonction pour récupérer les données météo (prévisions sur 5 jours avec des intervalles de 3 heures)
-  const fetchWeatherData = (latitude, longitude) => {
+  // Fonction pour récupérer la météo actuelle pour une ville ou la géolocalisation
+  const fetchCurrentWeather = (latitude, longitude) => {
     fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`
+      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=fr`
     )
       .then((res) => res.json())
       .then((data) => {
-        setWeatherData(data);
+        setCurrentWeatherData(data); // Stocker la météo actuelle
       })
       .catch((error) => {
         console.error("Erreur lors de la récupération des données météo", error);
       });
   };
 
-  // Utiliser les coordonnées une fois qu'elles sont disponibles pour récupérer les données météo
+  // Fonction pour récupérer les prévisions météo pour une ville ou la géolocalisation
+  const fetchForecastDataByCoords = (latitude, longitude) => {
+    fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=fr`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setUserLocationData(data); // Stocker les prévisions météo basées sur la localisation
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la récupération des données des prévisions", error);
+      });
+  };
+
+  // Fonction pour récupérer la météo actuelle et les prévisions pour une ville saisie
+  const fetchWeatherDataByCity = (cityName) => {
+    // Météo actuelle
+    fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric&lang=fr`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        // Ajouter la nouvelle ville à la liste des villes avec la météo actuelle
+        addCityWeatherData({ city: cityName, data: data });
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la récupération des données météo", error);
+      });
+
+    // Prévisions météo
+    fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?q=${cityName}&appid=${API_KEY}&units=metric&lang=fr`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setWeatherDataList((prevWeatherDataList) => [
+          ...prevWeatherDataList,
+          { city: cityName, data: data },
+        ]);
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la récupération des prévisions météo", error);
+      });
+  };
+
+  // Gérer la saisie de la ville
+  const handleChange = (event) => {
+    setCity(event.target.value);
+  };
+
+  const handleAddCity = () => {
+    if (city.trim() !== '') {
+      fetchWeatherDataByCity(city); // Ajouter la ville et récupérer les données météo
+      setCity(''); // Réinitialiser le champ input
+    }
+  };
+
+  // Utiliser la géolocalisation pour récupérer la météo actuelle et les prévisions
   useEffect(() => {
     if (coords) {
-      fetchWeatherData(coords.latitude, coords.longitude);
+      fetchCurrentWeather(coords.latitude, coords.longitude); // Récupérer la météo actuelle pour la localisation
+      fetchForecastDataByCoords(coords.latitude, coords.longitude); // Récupérer les prévisions météo
     }
   }, [coords]);
 
@@ -46,59 +115,29 @@ const Home = () => {
     return <div>La géolocalisation est désactivée. Veuillez l'activer.</div>;
   }
 
-  if (!coords) {
-    return         <div className="loader">
-    <Circles
- height="80"
-  width="80"
-  color="#4fa94d"
-  ariaLabel="circles-loading"
-  wrapperStyle={{}}
-  wrapperClass=""
-  visible={true}
-    />  
-    </div>  
-  }
-
   return (
-    <div>
-      {weatherData ? (
-        <div className="forecast">
-          <h1>Prévisions météo pour {weatherData.city.name}</h1>
-          <Swiper
-            spaceBetween={50}
-            slidesPerView={3} // Afficher 3 prévisions par vue (ajuster selon les besoins)
-            pagination={{ clickable: true }} // Pagination cliquable
-          >
-            {weatherData.list.map((forecast, index) => (
-              <SwiperSlide key={index}>
-                <div className="forecast-item">
-                  <p><strong>Date et heure :</strong> {forecast.dt_txt}</p>
-                  <p><strong>Température :</strong> {forecast.main.temp} °C</p>
-                  <p><strong>Humidité :</strong> {forecast.main.humidity} %</p>
-                  <p><strong>Conditions :</strong> {forecast.weather[0].description}</p>
-                  <img
-                    src={`https://openweathermap.org/img/wn/${forecast.weather[0].icon}@2x.png`}
-                    alt="Weather Icon"
-                  />
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
+    <div className="container">
+      <h1>Météo actuelle et prévisions</h1>
+
+      {/* Saisie de la ville */}
+      <input type="text" value={city} onChange={handleChange} placeholder="Ajouter une ville" />
+      <button type="button" className='btn btn-primary mt-3 mb-3' onClick={handleAddCity}>
+        Ajouter une ville
+      </button>
+
+      {/* Météo actuelle */}
+
+      {/* Onglets des prévisions */}
+      {userLocationData || weatherDataList.length > 0 ? (
+        <WeatherTabs
+          currentWeatherData={currentWeatherData}
+          userLocationData={userLocationData}
+          weatherDataList={weatherDataList}
+          citiesWeatherData={citiesWeatherData} // Transmettre toutes les villes et leurs données météo
+        />
       ) : (
-        <div className="loader">
-<Circles
- height="80"
-  width="80"
-  color="#4fa94d"
-  ariaLabel="circles-loading"
-  wrapperStyle={{}}
-  wrapperClass=""
-  visible={true}
-/>  
-</div>  
-  )}
+        <Loader />
+      )}
     </div>
   );
 };
